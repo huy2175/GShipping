@@ -3,6 +3,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
+
 import '../widgets/location_details_sheet.dart';
 import '../../contacts/services/firestore_customer_service.dart';
 import '../../contacts/models/customer_model.dart';
@@ -20,8 +21,15 @@ class _HomeScreenState extends State<HomeScreen> {
   final Geocoding _geocoding = Geocoding();
   final FirestoreCustomerService _customerService = FirestoreCustomerService();
   final List<LatLng> _pinnedLocations = [];
+  late final Stream<List<Map<String, dynamic>>> _customersStream;
   LatLng _currentPin = const LatLng(10.762622, 106.660172);
   bool _isPinned = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _customersStream = _customerService.getCustomersStream();
+  }
 
   @override
   void dispose() {
@@ -102,7 +110,9 @@ class _HomeScreenState extends State<HomeScreen> {
       // Cách tốt nhất là truyền customer từ marker tap.
     }
 
-    print('DEBUG: _handleMarkerTap called with customer: ${customer?.fullName}');
+    print(
+      'DEBUG: _handleMarkerTap called with customer: ${customer?.fullName}',
+    );
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -117,9 +127,9 @@ class _HomeScreenState extends State<HomeScreen> {
               _isPinned = false;
             }
           });
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Đã xóa ghim vị trí')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Đã xóa ghim vị trí')));
         },
       ),
     );
@@ -150,16 +160,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
         _mapController.move(targetLatLng, 15.0);
 
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Đã tìm thấy vị trí cho: $address')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Đã tìm thấy vị trí cho: $address')),
+        );
       }
     } catch (e) {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Không tìm thấy địa chỉ này tại Việt Nam. Vui lòng thử lại!'),
+          content: Text(
+            'Không tìm thấy địa chỉ này tại Việt Nam. Vui lòng thử lại!',
+          ),
         ),
       );
     }
@@ -170,35 +182,40 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // 1. Lớp Bản đồ
-          StreamBuilder<List<Map<String, dynamic>>>(
-            stream: _customerService.getCustomersStream(),
-            builder: (context, snapshot) {
-              List<Customer> customers = [];
-              if (snapshot.hasData) {
-                customers = snapshot.data!.map((map) => Customer.fromMap(map)).toList();
-              }
+          FlutterMap(
+            mapController: _mapController,
+            options: MapOptions(initialCenter: _currentPin, initialZoom: 13.0),
+            children: [
+              TileLayer(
+                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                userAgentPackageName: 'com.gshipping.app',
+              ),
+              StreamBuilder<List<Map<String, dynamic>>>(
+                stream: _customersStream,
+                builder: (context, snapshot) {
+                  List<Customer> customers = [];
+                  if (snapshot.hasData) {
+                    customers = snapshot.data!
+                        .map((map) => Customer.fromMap(map))
+                        .toList();
+                  }
 
-              return FlutterMap(
-                mapController: _mapController,
-                options: MapOptions(initialCenter: _currentPin, initialZoom: 13.0),
-                children: [
-                  TileLayer(
-                    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                    userAgentPackageName: 'com.gshipping.app',
-                  ),
-                  MarkerLayer(
+                  return MarkerLayer(
                     markers: [
-                      // Markers cho khách hàng đã lưu
                       ...customers.map((customer) {
-                        final location = LatLng(customer.latitude, customer.longitude);
+                        final location = LatLng(
+                          customer.latitude,
+                          customer.longitude,
+                        );
                         return Marker(
                           point: location,
                           width: 40,
                           height: 40,
                           child: GestureDetector(
                             onTap: () {
-                              print('DEBUG: Marker tap for customer: ${customer.fullName}');
+                              print(
+                                'DEBUG: Marker tap for customer: ${customer.fullName}',
+                              );
                               _handleMarkerTap(location, customer: customer);
                             },
                             child: const Icon(
@@ -209,13 +226,19 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         );
                       }),
-                      // Markers cho các điểm ghim tạm thời
                       ..._pinnedLocations.map((point) {
-                        // TÌM KIẾM: Kiểm tra xem điểm ghim đỏ này có trùng với khách hàng nào đã lưu không
                         final matchingCustomer = customers.firstWhere(
-                          (c) => (c.latitude - point.latitude).abs() < 0.0001 &&
-                                 (c.longitude - point.longitude).abs() < 0.0001,
-                          orElse: () => Customer(id: '', fullName: '', phoneNumber: '', address: '', latitude: 0, longitude: 0),
+                          (c) =>
+                              (c.latitude - point.latitude).abs() < 0.0001 &&
+                              (c.longitude - point.longitude).abs() < 0.0001,
+                          orElse: () => Customer(
+                            id: '',
+                            fullName: '',
+                            phoneNumber: '',
+                            address: '',
+                            latitude: 0,
+                            longitude: 0,
+                          ),
                         );
 
                         final hasCustomer = matchingCustomer.id.isNotEmpty;
@@ -227,7 +250,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: GestureDetector(
                             onTap: () => _handleMarkerTap(
                               point,
-                              customer: hasCustomer ? matchingCustomer : null
+                              customer: hasCustomer ? matchingCustomer : null,
                             ),
                             child: Icon(
                               Icons.location_on,
@@ -238,10 +261,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         );
                       }),
                     ],
-                  ),
-                ],
-              );
-            },
+                  );
+                },
+              ),
+            ],
           ),
           // Thanh tìm kiếm địa chỉ (Đặt sau FlutterMap để nằm trên)
           Positioned(
@@ -295,8 +318,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   mini: true,
                   elevation: 2,
                   backgroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  child: const Icon(Icons.my_location, color: Color(0xFF2563EB)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.my_location,
+                    color: Color(0xFF2563EB),
+                  ),
                 ),
                 const SizedBox(height: 12),
                 FloatingActionButton(
@@ -305,10 +333,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   mini: true,
                   elevation: 2,
                   backgroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   child: Icon(
                     _isPinned ? Icons.push_pin : Icons.push_pin_outlined,
-                    color: _isPinned ? const Color(0xFFB91C1C) : const Color(0xFF2563EB),
+                    color: _isPinned
+                        ? const Color(0xFFB91C1C)
+                        : const Color(0xFF2563EB),
                   ),
                 ),
               ],
