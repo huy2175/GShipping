@@ -56,8 +56,8 @@ class CustomerMapScreen extends StatelessWidget {
         ),
         children: [
           TileLayer(
-            urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-            userAgentPackageName: 'com.gshipping.app',
+            urlTemplate: 'https://tile.openstreetmap.de/{z}/{x}/{y}.png',
+            userAgentPackageName: 'com.example.g_shipping',
           ),
           MarkerLayer(
             markers: markers,

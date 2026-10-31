@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 import '../widgets/location_details_sheet.dart';
 import '../../contacts/services/firestore_customer_service.dart';
@@ -18,7 +21,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final MapController _mapController = MapController();
   final TextEditingController _searchController = TextEditingController();
-  final Geocoding _geocoding = Geocoding();
+  late final Geocoding? _geocoding = kIsWeb ? null : Geocoding();
   final FirestoreCustomerService _customerService = FirestoreCustomerService();
   final List<LatLng> _pinnedLocations = [];
   late final Stream<List<Map<String, dynamic>>> _customersStream;
@@ -138,27 +141,51 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _searchAddress(String address) async {
     if (address.trim().isEmpty) return;
 
-    // Tối ưu cho tiếng Việt: Thêm "Việt Nam" để thu hẹp phạm vi tìm kiếm
     final searchQuery = "${address.trim()}, Việt Nam";
 
     try {
-      final locations = await _geocoding.locationFromAddress(searchQuery);
+      LatLng? targetLatLng;
+      if (kIsWeb) {
+        final response = await http
+            .get(Uri.https('photon.komoot.io', '/api/', {
+              'q': searchQuery,
+              'limit': '1',
+              'lang': 'vi',
+            }))
+            .timeout(const Duration(seconds: 12));
+        if (response.statusCode != 200) {
+          throw Exception('Tìm địa chỉ trả về HTTP ${response.statusCode}');
+        }
+
+        final features = (jsonDecode(response.body) as Map)['features'] as List;
+        if (features.isNotEmpty) {
+          final coordinates =
+              (features.first as Map)['geometry']['coordinates'] as List;
+          targetLatLng = LatLng(
+            (coordinates[1] as num).toDouble(),
+            (coordinates[0] as num).toDouble(),
+          );
+        }
+      } else {
+        final locations = await _geocoding!.locationFromAddress(searchQuery);
+        if (locations.isNotEmpty) {
+          targetLatLng = LatLng(
+            locations.first.latitude,
+            locations.first.longitude,
+          );
+        }
+      }
       if (!mounted) return;
 
-      if (locations.isNotEmpty) {
-        final firstLocation = locations.first;
-        final targetLatLng = LatLng(
-          firstLocation.latitude,
-          firstLocation.longitude,
-        );
-
+      final result = targetLatLng;
+      if (result != null) {
         setState(() {
-          _currentPin = targetLatLng;
+          _currentPin = result;
           _isPinned = true;
-          _pinnedLocations.add(targetLatLng);
+          _pinnedLocations.add(result);
         });
 
-        _mapController.move(targetLatLng, 15.0);
+        _mapController.move(result, 15.0);
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Đã tìm thấy vị trí cho: $address')),
@@ -187,8 +214,8 @@ class _HomeScreenState extends State<HomeScreen> {
             options: MapOptions(initialCenter: _currentPin, initialZoom: 13.0),
             children: [
               TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.gshipping.app',
+                urlTemplate: 'https://tile.openstreetmap.de/{z}/{x}/{y}.png',
+                userAgentPackageName: 'com.example.g_shipping',
               ),
               StreamBuilder<List<Map<String, dynamic>>>(
                 stream: _customersStream,

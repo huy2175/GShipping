@@ -237,6 +237,7 @@ class _ShiftsScreenState extends State<ShiftsScreen> {
   }
 
   void _showAddShiftDialog() {
+    final pageContext = context;
     final TextEditingController locationController = TextEditingController();
     DateTime selectedStart = DateTime.now().add(const Duration(days: 1));
     DateTime selectedEnd = DateTime.now().add(const Duration(days: 1, hours: 4));
@@ -244,10 +245,10 @@ class _ShiftsScreenState extends State<ShiftsScreen> {
     final selectedCustomerIds = <String>{};
 
     showDialog(
-      context: context,
-      builder: (context) {
+      context: pageContext,
+      builder: (dialogContext) {
         return StatefulBuilder(
-          builder: (context, setStateDialog) {
+          builder: (dialogContext, setStateDialog) {
             return AlertDialog(
               scrollable: true,
               backgroundColor: Colors.white,
@@ -292,14 +293,14 @@ class _ShiftsScreenState extends State<ShiftsScreen> {
                             ),
                             onPressed: () async {
                               final picked = await showDatePicker(
-                                context: context,
+                                context: dialogContext,
                                 initialDate: selectedStart,
                                 firstDate: DateTime.now(),
                                 lastDate: DateTime.now().add(const Duration(days: 365)),
                               );
                               if (picked != null) {
                                 final time = await showTimePicker(
-                                  context: context,
+                                  context: dialogContext,
                                   initialTime: TimeOfDay.fromDateTime(selectedStart),
                                 );
                                 if (time != null) {
@@ -325,14 +326,14 @@ class _ShiftsScreenState extends State<ShiftsScreen> {
                             ),
                             onPressed: () async {
                               final picked = await showDatePicker(
-                                context: context,
+                                context: dialogContext,
                                 initialDate: selectedEnd,
                                 firstDate: DateTime.now(),
                                 lastDate: DateTime.now().add(const Duration(days: 365)),
                               );
                               if (picked != null) {
                                 final time = await showTimePicker(
-                                  context: context,
+                                  context: dialogContext,
                                   initialTime: TimeOfDay.fromDateTime(selectedEnd),
                                 );
                                 if (time != null) {
@@ -408,13 +409,13 @@ class _ShiftsScreenState extends State<ShiftsScreen> {
               ),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () => Navigator.pop(dialogContext),
                   child: const Text('Hủy', style: TextStyle(color: Color(0xFF64748B))),
                 ),
                 ElevatedButton(
                   onPressed: () async {
                     if (locationController.text.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Vui lòng nhập địa điểm')));
+                      ScaffoldMessenger.of(pageContext).showSnackBar(const SnackBar(content: Text('Vui lòng nhập địa điểm')));
                       return;
                     }
                     try {
@@ -425,10 +426,13 @@ class _ShiftsScreenState extends State<ShiftsScreen> {
                         locationCoord: const LatLng(10.762622, 106.660172),
                         customerIds: selectedCustomerIds.toList(),
                       );
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Đăng ký ca làm thành công!')));
+                      if (!mounted || !dialogContext.mounted) return;
+                      Navigator.pop(dialogContext);
+                      ScaffoldMessenger.of(pageContext).showSnackBar(const SnackBar(content: Text('Đăng ký ca làm thành công!')));
                     } catch (e) {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Lỗi khi tạo ca: $e')));
+                      if (mounted && pageContext.mounted) {
+                        ScaffoldMessenger.of(pageContext).showSnackBar(SnackBar(content: Text('Lỗi khi tạo ca: $e')));
+                      }
                     }
                   },
                   style: ElevatedButton.styleFrom(
