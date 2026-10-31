@@ -16,10 +16,7 @@ class SupportScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Trung tâm hỗ trợ'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Trung tâm hỗ trợ'), centerTitle: true),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -31,7 +28,10 @@ class SupportScreen extends StatelessWidget {
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Theme.of(context).colorScheme.primary, Theme.of(context).colorScheme.secondary],
+                  colors: [
+                    Theme.of(context).colorScheme.primary,
+                    Theme.of(context).colorScheme.secondary,
+                  ],
                 ),
                 borderRadius: BorderRadius.circular(16),
               ),
@@ -40,12 +40,19 @@ class SupportScreen extends StatelessWidget {
                 children: [
                   const Text(
                     'Chúng tôi có thể giúp gì cho bạn?',
-                    style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Đội ngũ GShipping luôn sẵn sàng hỗ trợ bạn 24/7.',
-                    style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14),
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.9),
+                      fontSize: 14,
+                    ),
                   ),
                 ],
               ),
@@ -115,7 +122,10 @@ class SupportScreen extends StatelessWidget {
     return Theme(
       data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
       child: ExpansionTile(
-        title: Text(question, style: const TextStyle(fontWeight: FontWeight.w500)),
+        title: Text(
+          question,
+          style: const TextStyle(fontWeight: FontWeight.w500),
+        ),
         children: [
           Padding(
             padding: const EdgeInsets.only(bottom: 16),
@@ -126,7 +136,13 @@ class SupportScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildContactItem(BuildContext context, IconData icon, String title, String value, VoidCallback onTap) {
+  Widget _buildContactItem(
+    BuildContext context,
+    IconData icon,
+    String title,
+    String value,
+    VoidCallback onTap,
+  ) {
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
@@ -135,8 +151,18 @@ class SupportScreen extends StatelessWidget {
       ),
       child: ListTile(
         leading: Icon(icon, color: Theme.of(context).colorScheme.primary),
-        title: Text(title, style: const TextStyle(fontSize: 14, color: Colors.grey)),
-        subtitle: Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
+        title: Text(
+          title,
+          style: const TextStyle(fontSize: 14, color: Colors.grey),
+        ),
+        subtitle: Text(
+          value,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+          ),
+        ),
         trailing: const Icon(Icons.chevron_right),
         onTap: onTap,
       ),

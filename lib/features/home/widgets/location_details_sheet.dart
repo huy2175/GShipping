@@ -1,20 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:io';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+
 import '../../contacts/services/i_customer_service.dart';
 import '../../contacts/services/firestore_customer_service.dart';
+import '../../../shared/services/image_upload_service.dart';
 
 class LocationDetailsSheet extends StatefulWidget {
   final LatLng location;
-  final VoidCallback onDeletePin;
+  final VoidCallback? onDeletePin;
+  final VoidCallback? onSaved;
 
   const LocationDetailsSheet({
     super.key,
     required this.location,
-    required this.onDeletePin,
+    this.onDeletePin,
+    this.onSaved,
   });
 
   @override
@@ -28,7 +29,7 @@ class _LocationDetailsSheetState extends State<LocationDetailsSheet> {
   final TextEditingController _addressController = TextEditingController();
   final ICustomerService _customerService = FirestoreCustomerService();
 
-  List<File> _imageFiles = [];
+  final List<XFile> _imageFiles = [];
   final ImagePicker _picker = ImagePicker();
   bool _isSubmitting = false;
 
@@ -38,27 +39,6 @@ class _LocationDetailsSheetState extends State<LocationDetailsSheet> {
     _phoneController.dispose();
     _addressController.dispose();
     super.dispose();
-  }
-
-  Future<String> _uploadToCloudinary(File file) async {
-    const String cloudName = 'dbbliokko';
-    const String uploadPreset = 'gshipping_preset';
-
-    final url = Uri.parse('https://api.cloudinary.com/v1_1/$cloudName/image/upload');
-
-    final request = http.MultipartRequest('POST', url)
-      ..fields['upload_preset'] = uploadPreset
-      ..files.add(await http.MultipartFile.fromPath('file', file.path));
-
-    final response = await request.send();
-
-    if (response.statusCode == 200) {
-      final responseData = await response.stream.bytesToString();
-      final Map<String, dynamic> json = jsonDecode(responseData);
-      return json['secure_url'];
-    } else {
-      throw Exception('Failed to upload image to Cloudinary');
-    }
   }
 
   Future<void> _submitForm() async {
@@ -75,7 +55,7 @@ class _LocationDetailsSheetState extends State<LocationDetailsSheet> {
         List<String> imageUrls = [];
 
         for (var file in _imageFiles) {
-          final uploadedUrl = await _uploadToCloudinary(file);
+          final uploadedUrl = await ImageUploadService.upload(file);
           imageUrls.add(uploadedUrl);
         }
 
@@ -94,6 +74,7 @@ class _LocationDetailsSheetState extends State<LocationDetailsSheet> {
             backgroundColor: Color(0xFF15803D),
           ),
         );
+        widget.onSaved?.call();
         Navigator.pop(context);
       } catch (e) {
         if (!mounted) return;
@@ -114,10 +95,14 @@ class _LocationDetailsSheetState extends State<LocationDetailsSheet> {
   }
 
   Future<void> _pickImage() async {
-    final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    final XFile? pickedFile = await _picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 80,
+      maxWidth: 1600,
+    );
     if (pickedFile != null) {
       setState(() {
-        _imageFiles.add(File(pickedFile.path));
+        _imageFiles.add(pickedFile);
       });
     }
   }
@@ -155,7 +140,7 @@ class _LocationDetailsSheetState extends State<LocationDetailsSheet> {
               ),
               const SizedBox(height: 25),
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween         ,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text(
                     'Thêm Khách Hàng Mới',
@@ -165,14 +150,18 @@ class _LocationDetailsSheetState extends State<LocationDetailsSheet> {
                       color: Color(0xFF0F172A),
                     ),
                   ),
-                  IconButton(
-                    onPressed: () {
-                      widget.onDeletePin();
-                      Navigator.pop(context);
-                    },
-                    icon: const Icon(Icons.delete_outline, color: Color(0xFFB91C1C)),
-                    tooltip: 'Xóa ghim này',
-                  ),
+                  if (widget.onDeletePin != null)
+                    IconButton(
+                      onPressed: () {
+                        widget.onDeletePin?.call();
+                        Navigator.pop(context);
+                      },
+                      icon: const Icon(
+                        Icons.delete_outline,
+                        color: Color(0xFFB91C1C),
+                      ),
+                      tooltip: 'Xóa ghim này',
+                    ),
                 ],
               ),
               const SizedBox(height: 8),
@@ -198,9 +187,15 @@ class _LocationDetailsSheetState extends State<LocationDetailsSheet> {
                             decoration: BoxDecoration(
                               color: const Color(0xFFF1F5F9),
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: const Color(0xFFE2E8F0)),
+                              border: Border.all(
+                                color: const Color(0xFFE2E8F0),
+                              ),
                             ),
-                            child: const Icon(Icons.add_a_photo_outlined, color: Color(0xFF64748B), size: 30),
+                            child: const Icon(
+                              Icons.add_a_photo_outlined,
+                              color: Color(0xFF64748B),
+                              size: 30,
+                            ),
                           ),
                         ),
                       );
@@ -209,15 +204,18 @@ class _LocationDetailsSheetState extends State<LocationDetailsSheet> {
                       padding: const EdgeInsets.only(right: 12),
                       child: Stack(
                         children: [
-                          Container(
-                            width: 100,
-                            height: 100,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(12),
-                              image: DecorationImage(
-                                image: FileImage(_imageFiles[index]),
-                                fit: BoxFit.cover,
-                              ),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: FutureBuilder(
+                              future: _imageFiles[index].readAsBytes(),
+                              builder: (context, snapshot) => snapshot.hasData
+                                  ? Image.memory(
+                                      snapshot.data!,
+                                      width: 100,
+                                      height: 100,
+                                      fit: BoxFit.cover,
+                                    )
+                                  : const SizedBox(width: 100, height: 100),
                             ),
                           ),
                           Positioned(
@@ -230,7 +228,11 @@ class _LocationDetailsSheetState extends State<LocationDetailsSheet> {
                                   color: Colors.red,
                                   shape: BoxShape.circle,
                                 ),
-                                child: const Icon(Icons.close, size: 16, color: Colors.white),
+                                child: const Icon(
+                                  Icons.close,
+                                  size: 16,
+                                  color: Colors.white,
+                                ),
                               ),
                             ),
                           ),
@@ -246,12 +248,20 @@ class _LocationDetailsSheetState extends State<LocationDetailsSheet> {
                 controller: _nameController,
                 decoration: InputDecoration(
                   labelText: 'Họ và Tên',
-                  prefixIcon: const Icon(Icons.person_outline, color: Color(0xFF64748B)),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                  prefixIcon: const Icon(
+                    Icons.person_outline,
+                    color: Color(0xFF64748B),
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                  ),
                   filled: true,
                   fillColor: const Color(0xFFF8FAFC),
                 ),
-                validator: (value) => (value == null || value.trim().isEmpty) ? 'Vui lòng nhập họ tên' : null,
+                validator: (value) => (value == null || value.trim().isEmpty)
+                    ? 'Vui lòng nhập họ tên'
+                    : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -259,13 +269,21 @@ class _LocationDetailsSheetState extends State<LocationDetailsSheet> {
                 keyboardType: TextInputType.phone,
                 decoration: InputDecoration(
                   labelText: 'Số điện thoại',
-                  prefixIcon: const Icon(Icons.phone_outlined, color: Color(0xFF64748B)),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                  prefixIcon: const Icon(
+                    Icons.phone_outlined,
+                    color: Color(0xFF64748B),
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                  ),
                   filled: true,
                   fillColor: const Color(0xFFF8FAFC),
                 ),
                 validator: (value) {
-                  if (value == null || value.trim().isEmpty) return 'Vui lòng nhập số điện thoại';
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Vui lòng nhập số điện thoại';
+                  }
                   if (value.length < 10) return 'Số điện thoại không hợp lệ';
                   return null;
                 },
@@ -275,12 +293,20 @@ class _LocationDetailsSheetState extends State<LocationDetailsSheet> {
                 controller: _addressController,
                 decoration: InputDecoration(
                   labelText: 'Địa chỉ chi tiết',
-                  prefixIcon: const Icon(Icons.location_on_outlined, color: Color(0xFF64748B)),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                  prefixIcon: const Icon(
+                    Icons.location_on_outlined,
+                    color: Color(0xFF64748B),
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                  ),
                   filled: true,
                   fillColor: const Color(0xFFF8FAFC),
                 ),
-                validator: (value) => (value == null || value.trim().isEmpty) ? 'Vui lòng nhập địa chỉ' : null,
+                validator: (value) => (value == null || value.trim().isEmpty)
+                    ? 'Vui lòng nhập địa chỉ'
+                    : null,
               ),
               const SizedBox(height: 20),
               Container(
@@ -297,7 +323,10 @@ class _LocationDetailsSheetState extends State<LocationDetailsSheet> {
                     Expanded(
                       child: Text(
                         'Tọa độ: ${widget.location.latitude.toStringAsFixed(5)}, ${widget.location.longitude.toStringAsFixed(5)}',
-                        style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Color(0xFF64748B),
+                        ),
                       ),
                     ),
                   ],
@@ -309,9 +338,13 @@ class _LocationDetailsSheetState extends State<LocationDetailsSheet> {
                 height: 55,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: _isSubmitting ? Colors.grey : const Color(0xFF2563EB),
+                    backgroundColor: _isSubmitting
+                        ? Colors.grey
+                        : const Color(0xFF2563EB),
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     elevation: 0,
                   ),
                   onPressed: _isSubmitting ? null : _submitForm,
@@ -326,7 +359,10 @@ class _LocationDetailsSheetState extends State<LocationDetailsSheet> {
                         )
                       : const Text(
                           'LƯU KHÁCH HÀNG',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                 ),
               ),

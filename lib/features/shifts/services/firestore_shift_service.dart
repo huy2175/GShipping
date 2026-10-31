@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:latlong2/latlong.dart';
+
 import 'i_shift_service.dart';
 
 class FirestoreShiftService implements IShiftService {
@@ -15,10 +16,7 @@ class FirestoreShiftService implements IShiftService {
           .get();
 
       return snapshot.docs.map((doc) {
-        return {
-          'id': doc.id,
-          ...doc.data() as Map<String, dynamic>,
-        };
+        return {'id': doc.id, ...doc.data() as Map<String, dynamic>};
       }).toList();
     } catch (e) {
       throw Exception('Firestore Error (getShifts): $e');
@@ -32,13 +30,10 @@ class FirestoreShiftService implements IShiftService {
         .orderBy('startTime', descending: false)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) {
-        return {
-          'id': doc.id,
-          ...doc.data() as Map<String, dynamic>,
-        };
-      }).toList();
-    });
+          return snapshot.docs.map((doc) {
+            return {'id': doc.id, ...doc.data()};
+          }).toList();
+        });
   }
 
   @override
@@ -46,17 +41,24 @@ class FirestoreShiftService implements IShiftService {
     required DateTime startTime,
     required DateTime endTime,
     required String location,
-    required LatLng locationCoord,
+    LatLng? locationCoord,
+    required List<String> customerIds,
     String status = 'pending',
   }) async {
+    if (location.trim().isEmpty || !endTime.isAfter(startTime)) {
+      throw ArgumentError('Địa điểm hoặc thời gian ca không hợp lệ.');
+    }
     try {
       await _db.collection(_collection).add({
         'startTime': Timestamp.fromDate(startTime),
         'endTime': Timestamp.fromDate(endTime),
         'location': location,
-        'latitude': locationCoord.latitude,
-        'longitude': locationCoord.longitude,
+        if (locationCoord != null) ...{
+          'latitude': locationCoord.latitude,
+          'longitude': locationCoord.longitude,
+        },
         'status': status,
+        'customerIds': customerIds,
         'createdAt': FieldValue.serverTimestamp(),
       });
     } catch (e) {
@@ -65,14 +67,33 @@ class FirestoreShiftService implements IShiftService {
   }
 
   @override
-  Future<void> updateShiftStatus(String id, String status) async {
+  Future<void> completeShift(String id, String proofImageUrl) async {
+    if (proofImageUrl.trim().isEmpty) {
+      throw ArgumentError('Cần ảnh đơn hàng để hoàn thành ca.');
+    }
     try {
-      await _db.collection(_collection).doc(id).update({
-        'status': status,
+      final reference = _db.collection(_collection).doc(id);
+      await _db.runTransaction((transaction) async {
+        final snapshot = await transaction.get(reference);
+        if (!snapshot.exists || snapshot.data()?['status'] == 'completed') {
+          throw StateError('Ca không tồn tại hoặc đã hoàn thành.');
+        }
+        transaction.update(reference, {
+          'status': 'completed',
+          'proofImageUrl': proofImageUrl,
+          'completedAt': FieldValue.serverTimestamp(),
+        });
       });
     } catch (e) {
-      throw Exception('Firestore Error (updateShiftStatus): $e');
+      throw Exception('Firestore Error (completeShift): $e');
     }
+  }
+
+  @override
+  Future<void> updateCustomerIds(String id, List<String> customerIds) async {
+    await _db.collection(_collection).doc(id).update({
+      'customerIds': customerIds,
+    });
   }
 
   @override

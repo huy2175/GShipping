@@ -13,12 +13,15 @@ abstract class IShiftService {
     required DateTime startTime,
     required DateTime endTime,
     required String location,
-    required LatLng locationCoord,
+    LatLng? locationCoord,
+    required List<String> customerIds,
     String status = 'pending',
   });
 
   /// Cập nhật trạng thái ca làm việc (ví dụ: xác nhận, hoàn thành)
-  Future<void> updateShiftStatus(String id, String status);
+  Future<void> completeShift(String id, String proofImageUrl);
+
+  Future<void> updateCustomerIds(String id, List<String> customerIds);
 
   /// Xóa ca làm việc
   Future<void> deleteShift(String id);

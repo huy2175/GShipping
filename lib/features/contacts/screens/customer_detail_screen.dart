@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+
 import '../models/customer_model.dart';
 import '../services/firestore_customer_service.dart';
 import '../../shifts/screens/customer_map_screen.dart';
+import '../../../shared/widgets/location_picker_screen.dart';
+
+import 'package:latlong2/latlong.dart';
 
 class CustomerDetailScreen extends StatefulWidget {
   final Customer customer;
@@ -15,6 +19,13 @@ class CustomerDetailScreen extends StatefulWidget {
 class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
   final FirestoreCustomerService _customerService = FirestoreCustomerService();
   bool _isEditing = false;
+  LatLng? _selectedLocation;
+  bool _locationChanged = false;
+  late String _displayName = widget.customer.fullName;
+  late String _savedPhone = widget.customer.phoneNumber;
+  late String _savedAddress = widget.customer.address;
+  late String _savedNote = widget.customer.note ?? '';
+  late LatLng? _savedLocation = widget.customer.location;
 
   late TextEditingController _nameController;
   late TextEditingController _phoneController;
@@ -28,6 +39,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     _phoneController = TextEditingController(text: widget.customer.phoneNumber);
     _addressController = TextEditingController(text: widget.customer.address);
     _noteController = TextEditingController(text: widget.customer.note);
+    _selectedLocation = _savedLocation;
   }
 
   @override
@@ -40,39 +52,104 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
   }
 
   Future<void> _updateCustomer() async {
-    try {
-      await _customerService.updateCustomer(
-        widget.customer.id,
-        {
-          'fullName': _nameController.text,
-          'phoneNumber': _phoneController.text,
-          'address': _addressController.text,
-          'note': _noteController.text,
-        },
+    if (_nameController.text.trim().isEmpty ||
+        _phoneController.text.trim().isEmpty ||
+        _addressController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Vui lòng nhập đủ tên, số điện thoại và địa chỉ.'),
+        ),
       );
+      return;
+    }
+    if (_addressController.text.trim() != _savedAddress && !_locationChanged) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Địa chỉ đã đổi. Hãy chọn lại vị trí trên bản đồ.'),
+        ),
+      );
+      return;
+    }
+    try {
+      await _customerService.updateCustomer(widget.customer.id, {
+        'fullName': _nameController.text,
+        'phoneNumber': _phoneController.text,
+        'address': _addressController.text,
+        'note': _noteController.text,
+        if (_locationChanged && _selectedLocation != null) ...{
+          'latitude': _selectedLocation!.latitude,
+          'longitude': _selectedLocation!.longitude,
+        },
+      });
+      if (!mounted) return;
       setState(() {
         _isEditing = false;
+        _displayName = _nameController.text.trim();
+        _savedPhone = _phoneController.text.trim();
+        _savedAddress = _addressController.text.trim();
+        _savedNote = _noteController.text.trim();
+        _savedLocation = _selectedLocation;
+        _locationChanged = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Cập nhật thông tin khách hàng thành công!')),
+        const SnackBar(
+          content: Text('Cập nhật thông tin khách hàng thành công!'),
+        ),
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Lỗi cập nhật: $e')),
-      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Lỗi cập nhật: $e')));
     }
   }
 
-  void _viewOnMap() {
-    _customerService.getCustomers().then((allCustomers) {
-      final customerData = allCustomers.firstWhere((c) => c['id'] == widget.customer.id);
-      Navigator.push(
+  Future<void> _viewOnMap() async {
+    try {
+      final allCustomers = await _customerService.getCustomers();
+      if (!mounted) return;
+      final customerData = allCustomers.firstWhere(
+        (customer) => customer['id'] == widget.customer.id,
+      );
+      await Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => CustomerMapScreen(customers: [customerData]),
+          builder: (_) => CustomerMapScreen(customers: [customerData]),
         ),
       );
-    });
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Không mở được bản đồ: $error')));
+      }
+    }
+  }
+
+  Future<void> _pickLocation() async {
+    final selected = await Navigator.push<LatLng>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => LocationPickerScreen(initial: _selectedLocation),
+      ),
+    );
+    if (selected != null && mounted) {
+      setState(() {
+        _selectedLocation = selected;
+        _locationChanged = true;
+      });
+    }
+  }
+
+  void _toggleEditing() {
+    if (_isEditing) {
+      _nameController.text = _displayName;
+      _phoneController.text = _savedPhone;
+      _addressController.text = _savedAddress;
+      _noteController.text = _savedNote;
+      _selectedLocation = _savedLocation;
+      _locationChanged = false;
+    }
+    setState(() => _isEditing = !_isEditing);
   }
 
   @override
@@ -82,7 +159,10 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
       appBar: AppBar(
         title: const Text(
           'Chi tiết khách hàng',
-          style: TextStyle(color: Color(0xFF0F172A), fontWeight: FontWeight.w600),
+          style: TextStyle(
+            color: Color(0xFF0F172A),
+            fontWeight: FontWeight.w600,
+          ),
         ),
         centerTitle: true,
         elevation: 0,
@@ -90,12 +170,11 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
         foregroundColor: const Color(0xFF0F172A),
         actions: [
           IconButton(
-            icon: Icon(_isEditing ? Icons.close : Icons.edit, color: const Color(0xFF2563EB)),
-            onPressed: () {
-              setState(() {
-                _isEditing = !_isEditing;
-              });
-            },
+            icon: Icon(
+              _isEditing ? Icons.close : Icons.edit,
+              color: const Color(0xFF2563EB),
+            ),
+            onPressed: _toggleEditing,
           ),
         ],
       ),
@@ -110,7 +189,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                   _buildImageGallery(),
                   const SizedBox(height: 16),
                   Text(
-                    widget.customer.fullName,
+                    _displayName,
                     style: const TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w700,
@@ -126,6 +205,18 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
             _buildInfoField('Số điện thoại', _phoneController),
             const SizedBox(height: 20),
             _buildInfoField('Địa chỉ', _addressController),
+            if (_isEditing) ...[
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                onPressed: _pickLocation,
+                icon: const Icon(Icons.location_on_outlined),
+                label: Text(
+                  _locationChanged
+                      ? 'Đã chọn tọa độ mới'
+                      : 'Chọn lại vị trí trên bản đồ',
+                ),
+              ),
+            ],
             const SizedBox(height: 20),
             _buildInfoField('Ghi chú', _noteController),
             const SizedBox(height: 40),
@@ -139,9 +230,14 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
-                  child: const Text('Lưu thay đổi', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                  child: const Text(
+                    'Lưu thay đổi',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
                 ),
               )
             else
@@ -176,8 +272,14 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
         radius: 50,
         backgroundColor: const Color(0xFF2563EB),
         child: Text(
-          widget.customer.fullName.isNotEmpty ? widget.customer.fullName[0].toUpperCase() : '?',
-          style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
+          widget.customer.fullName.isNotEmpty
+              ? widget.customer.fullName[0].toUpperCase()
+              : '?',
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 32,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       );
     }
@@ -202,7 +304,10 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                   width: 100,
                   height: 100,
                   color: const Color(0xFFF1F5F9),
-                  child: const Icon(Icons.broken_image, color: Color(0xFFCBD5E1)),
+                  child: const Icon(
+                    Icons.broken_image,
+                    color: Color(0xFFCBD5E1),
+                  ),
                 ),
               ),
             ),
@@ -237,14 +342,22 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFF2563EB), width: 2),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF2563EB),
+                      width: 2,
+                    ),
                   ),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               )
             : Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 12,
+                  horizontal: 16,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),

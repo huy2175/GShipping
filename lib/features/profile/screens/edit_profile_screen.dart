@@ -53,10 +53,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         await user.updateDisplayName(_nameController.text);
         await user.updateProfile();
 
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .set({
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
           'phoneNumber': _phoneController.text,
           'updatedAt': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
@@ -70,9 +67,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi cập nhật thông tin: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Lỗi cập nhật thông tin: $e')));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -86,7 +83,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       appBar: AppBar(
         title: const Text(
           'Chỉnh sửa thông tin',
-          style: TextStyle(color: Color(0xFF0F172A), fontWeight: FontWeight.w600),
+          style: TextStyle(
+            color: Color(0xFF0F172A),
+            fontWeight: FontWeight.w600,
+          ),
         ),
         centerTitle: true,
         elevation: 0,
@@ -109,7 +109,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         border: Border.all(color: Colors.white, width: 4),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
+                            color: Colors.black.withValues(alpha: 0.05),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
@@ -118,7 +118,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       child: CircleAvatar(
                         radius: 60,
                         backgroundColor: const Color(0xFFE2E8F0),
-                        child: const Icon(Icons.person, size: 60, color: Color(0xFF64748B)),
+                        child: const Icon(
+                          Icons.person,
+                          size: 60,
+                          color: Color(0xFF64748B),
+                        ),
                       ),
                     ),
                     Positioned(
@@ -127,13 +131,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       child: GestureDetector(
                         onTap: () {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Tính năng thay đổi ảnh đang phát triển')),
+                            const SnackBar(
+                              content: Text(
+                                'Tính năng thay đổi ảnh đang phát triển',
+                              ),
+                            ),
                           );
                         },
                         child: CircleAvatar(
                           radius: 18,
                           backgroundColor: const Color(0xFF2563EB),
-                          child: const Icon(Icons.camera_alt, size: 18, color: Colors.white),
+                          child: const Icon(
+                            Icons.camera_alt,
+                            size: 18,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),
@@ -154,7 +166,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 controller: _nameController,
                 decoration: InputDecoration(
                   labelText: 'Họ và Tên',
-                  prefixIcon: const Icon(Icons.person, color: Color(0xFF64748B)),
+                  prefixIcon: const Icon(
+                    Icons.person,
+                    color: Color(0xFF64748B),
+                  ),
                   filled: true,
                   fillColor: Colors.white,
                   enabledBorder: OutlineInputBorder(
@@ -163,12 +178,19 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFF2563EB), width: 2),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF2563EB),
+                      width: 2,
+                    ),
                   ),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
                 validator: (value) {
-                  if (value == null || value.isEmpty) return 'Vui lòng nhập họ tên';
+                  if (value == null || value.isEmpty) {
+                    return 'Vui lòng nhập họ tên';
+                  }
                   return null;
                 },
               ),
@@ -187,12 +209,19 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFF2563EB), width: 2),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF2563EB),
+                      width: 2,
+                    ),
                   ),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
                 validator: (value) {
-                  if (value == null || value.isEmpty) return 'Vui lòng nhập số điện thoại';
+                  if (value == null || value.isEmpty) {
+                    return 'Vui lòng nhập số điện thoại';
+                  }
                   if (value.length < 10) return 'Số điện thoại không hợp lệ';
                   return null;
                 },
@@ -207,18 +236,26 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                   child: _isLoading
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                      )
-                    : const Text(
-                        'Lưu thông tin',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                      ),
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text(
+                          'Lưu thông tin',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                 ),
               ),
             ],

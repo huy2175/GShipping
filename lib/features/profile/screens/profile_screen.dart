@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
 import 'edit_profile_screen.dart';
 import 'notification_screen.dart';
 import 'security_screen.dart';
 import 'support_screen.dart';
+
 import 'package:g_shipping/shared/widgets/animated_card.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -44,7 +46,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         backgroundColor: Theme.of(context).colorScheme.primary,
                         child: Text(
                           displayName[0].toUpperCase(),
-                          style: const TextStyle(fontSize: 40, color: Colors.white, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                            fontSize: 40,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                       Positioned(
@@ -56,7 +62,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           child: CircleAvatar(
                             radius: 16,
                             backgroundColor: Colors.blue,
-                            child: Icon(Icons.edit, size: 16, color: Colors.white),
+                            child: Icon(
+                              Icons.edit,
+                              size: 16,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
                       ),
@@ -65,7 +75,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const SizedBox(height: 16),
                   Text(
                     displayName,
-                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   Text(
                     email,
@@ -85,7 +98,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   const Text(
                     'Cài đặt tài khoản',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey),
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey,
+                    ),
                   ),
                   const SizedBox(height: 10),
                   _buildProfileItem(
@@ -94,7 +111,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const EditProfileScreen()),
+                        MaterialPageRoute(
+                          builder: (context) => const EditProfileScreen(),
+                        ),
                       );
                     },
                   ),
@@ -104,7 +123,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const NotificationScreen()),
+                        MaterialPageRoute(
+                          builder: (context) => const NotificationScreen(),
+                        ),
                       );
                     },
                   ),
@@ -114,7 +135,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const SecurityScreen()),
+                        MaterialPageRoute(
+                          builder: (context) => const SecurityScreen(),
+                        ),
                       );
                     },
                   ),
@@ -124,7 +147,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const SupportScreen()),
+                        MaterialPageRoute(
+                          builder: (context) => const SupportScreen(),
+                        ),
                       );
                     },
                   ),
@@ -163,7 +188,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       icon: const Icon(Icons.logout),
                       label: const Text(
                         'Đăng xuất',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
                     ),
                   ),
@@ -193,7 +221,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         child: ListTile(
           leading: Icon(icon, color: const Color(0xFF2563EB)),
-          title: Text(title, style: const TextStyle(fontSize: 15, color: Color(0xFF0F172A))),
+          title: Text(
+            title,
+            style: const TextStyle(fontSize: 15, color: Color(0xFF0F172A)),
+          ),
           trailing: const Icon(Icons.chevron_right, color: Color(0xFF64748B)),
           onTap: null, // Handle by AnimatedCard
         ),

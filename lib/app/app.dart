@@ -4,7 +4,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../features/auth/screens/login_screen.dart';
 import '../features/home/screens/main_screen.dart';
 
-
 class GShippingApp extends StatelessWidget {
   const GShippingApp({super.key});
 
@@ -14,9 +13,7 @@ class GShippingApp extends StatelessWidget {
       title: 'GShipping',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.blue,
-        ),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         useMaterial3: true,
       ),
       home: const AuthGate(),
@@ -34,9 +31,7 @@ class AuthGate extends StatelessWidget {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
-            body: Center(
-              child: CircularProgressIndicator(),
-            ),
+            body: Center(child: CircularProgressIndicator()),
           );
         }
 
@@ -49,6 +44,5 @@ class AuthGate extends StatelessWidget {
     );
   }
 }
-
 
 // Delete the old HomeScreen class

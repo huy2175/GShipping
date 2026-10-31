@@ -1,147 +1,28 @@
-# 🚚 GShipping
+# GShipping
 
-**GShipping – Delivery Management Application**
+Ứng dụng Flutter quản lý địa điểm khách hàng và ca làm việc. Bản đồ trong ứng dụng dùng OpenStreetMap; nút **Xem trên Google Maps** và **Chỉ đường** mở Google Maps từ tọa độ đã chọn.
 
-GShipping is a delivery management application designed to simplify the process of managing shipments, tracking deliveries, and organizing delivery operations. The project aims to provide a convenient and user-friendly experience for customers and delivery personnel.
+## Chức năng hiện có
 
-## ✨ Features
+- Đăng ký, đăng nhập bằng Firebase Authentication.
+- Chạm hoặc ghim điểm trên bản đồ để xem tọa độ, địa chỉ gần đúng và lưu khách hàng.
+- Xem lại khách hàng đã lưu trên bản đồ, tìm kiếm, sửa thông tin và chọn lại tọa độ khi đổi địa chỉ.
+- Tạo ca với địa điểm, tọa độ thực, giờ bắt đầu/kết thúc và danh sách khách hàng; xem khách hàng của ca trên bản đồ.
+- Chụp ảnh đơn hàng hoặc biên nhận bằng camera để xác nhận hoàn thành ca. Ảnh được tải lên Cloudinary, URL và thời điểm hoàn thành lưu trong Firestore.
+- Chỉnh sửa hồ sơ và đăng xuất.
 
-- 📦 **Shipment Management** – Manage shipment information and delivery orders.
-- 📍 **Location Management** – Save and manage customer delivery locations.
-- 🚚 **Delivery Tracking** – Support the process of tracking shipment status.
-- 👤 **Customer Management** – Organize customer information for delivery operations.
-- 📱 **User-Friendly Interface** – Build a clean and intuitive mobile application using Flutter.
-- 🔗 **API Integration** – Retrieve and process data through REST APIs.
+Ứng dụng hiện **chưa có mô hình đơn hàng, mã vận đơn hoặc theo dõi giao hàng**. Ảnh hoàn thành được gắn với **ca**, không phải từng đơn hàng. Tên quán hoặc tòa nhà tại một điểm phụ thuộc dữ liệu bản đồ; dùng nút Google Maps để xem thông tin địa điểm đầy đủ hơn. Tìm địa chỉ dùng geocoding trên Android/iOS và Photon trên Web/desktop; public Photon demo phù hợp lưu lượng vừa phải, không cam kết uptime và có thể giới hạn truy vấn nhiều.
 
-## 🛠️ Technologies Used
+## Chạy project
 
-| Technology | Purpose |
-|---|---|
-| Flutter | Cross-platform application development |
-| Dart | Application programming language |
-| REST API | Communication with backend services |
-| HTTP | Sending HTTP requests and receiving API responses |
-| Git & GitHub | Version control and source code management |
+1. Cài Flutter SDK và cấu hình Firebase cho nền tảng cần chạy.
+2. Chạy `flutter pub get`.
+3. Chạy `flutter run` hoặc `flutter run -d chrome`.
 
-## 📁 Project Structure
+Để tải ảnh, preset Cloudinary `gshipping_preset` phải hoạt động. Kiểm tra quyền camera, vị trí và mạng trên thiết bị. Chạy `flutter test` để kiểm tra trạng thái ca.
 
-```text
-GShipping/
-├── android/          # Android platform configuration
-├── ios/              # iOS platform configuration
-├── lib/              # Main Dart source code
-│   ├── model/        # Data models
-│   ├── services/     # API services
-│   ├── pages/        # Application screens
-│   ├── widgets/      # Reusable UI components
-│   └── main.dart     # Application entry point
-├── test/             # Automated tests
-├── pubspec.yaml      # Dependencies and project configuration
-├── pubspec.lock      # Locked dependency versions
-└── README.md         # Project documentation
-```
+## Dữ liệu và triển khai
 
-*Note: The structure above is illustrative. Update it to match the actual directories in your project.*
+Firestore dùng các collection `customers`, `shifts` và `users`. Trước khi triển khai cho nhiều tài khoản, cần thiết kế phân quyền Firestore Security Rules và phương án chuyển dữ liệu cũ. Hiện mã ứng dụng chưa tách khách hàng/ca theo chủ sở hữu; không dùng cấu hình Firestore cho phép mọi người đọc và ghi dữ liệu trong môi trường thật.
 
-## 🚀 Getting Started
-
-### Prerequisites
-
-Before running the project, make sure you have installed:
-
-- [Flutter SDK](https://docs.flutter.dev/get-started/install)
-- [Dart SDK](https://dart.dev/get-dart)
-- [Android Studio](https://developer.android.com/studio) or [Visual Studio Code](https://code.visualstudio.com/)
-- An Android emulator, iOS simulator, or a supported physical device
-
-### Installation
-
-**1. Clone the repository**
-
-```bash
-git clone https://github.com/hungblog2005-gif/GShipping.git
-```
-
-**2. Navigate to the project directory**
-
-```bash
-cd GShipping
-```
-
-**3. Install dependencies**
-
-```bash
-flutter pub get
-```
-
-**4. Check your Flutter environment**
-
-```bash
-flutter doctor
-```
-
-**5. Run the application**
-
-```bash
-flutter run
-```
-
-To run the application in Chrome, use:
-
-```bash
-flutter run -d chrome
-```
-
-## 🔌 API Integration
-
-GShipping uses API services to retrieve and process application data.
-
-The API service layer is responsible for:
-
-- Sending HTTP requests to API endpoints.
-- Parsing JSON responses.
-- Converting API data into Dart model objects.
-- Handling loading states and request errors.
-
-Make sure the API endpoint and required configuration are set correctly before running the application.
-
-## 🧪 Testing
-
-Run the project tests with:
-
-```bash
-flutter test
-```
-
-## 🔮 Future Improvements
-
-- Real-time shipment tracking.
-- Interactive maps and route visualization.
-- Push notifications for delivery status updates.
-- Delivery time estimation using Machine Learning.
-- Improved error handling and application performance.
-- Enhanced user interface and user experience.
-
-## 🤝 Contributing
-
-Contributions, suggestions, and bug reports are welcome.
-
-1. Fork this repository.
-2. Create a feature branch.
-3. Commit your changes.
-4. Push the branch to GitHub.
-5. Open a Pull Request.
-
-## 👨‍💻 Author
-
-**GShipping Development Team**
-
-GitHub: [hungblog2005-gif](https://github.com/hungblog2005-gif)
-
-## 📄 License
-
-No license has been specified yet. Please add a suitable license before allowing others to reuse or distribute this project.
-
----
-
-⭐ If you find this project useful, consider giving it a star!
+Các đề xuất về giao diện tương lai ở [design.md](design.md) chưa phải chức năng đã triển khai.

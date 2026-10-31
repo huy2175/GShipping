@@ -10,9 +10,11 @@ class SecurityScreen extends StatefulWidget {
 
 class _SecurityScreenState extends State<SecurityScreen> {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _currentPasswordController = TextEditingController();
+  final TextEditingController _currentPasswordController =
+      TextEditingController();
   final TextEditingController _newPasswordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
   bool _isLoading = false;
 
   @override
@@ -47,9 +49,8 @@ class _SecurityScreenState extends State<SecurityScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi thay đổi mật khẩu: $e')),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Lỗi thay đổi mật khẩu: $e')));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -63,7 +64,10 @@ class _SecurityScreenState extends State<SecurityScreen> {
       appBar: AppBar(
         title: const Text(
           'Bảo mật & Mật khẩu',
-          style: TextStyle(color: Color(0xFF0F172A), fontWeight: FontWeight.w600),
+          style: TextStyle(
+            color: Color(0xFF0F172A),
+            fontWeight: FontWeight.w600,
+          ),
         ),
         centerTitle: true,
         elevation: 0,
@@ -97,7 +101,10 @@ class _SecurityScreenState extends State<SecurityScreen> {
                 obscureText: true,
                 decoration: InputDecoration(
                   labelText: 'Mật khẩu hiện tại',
-                  prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF64748B)),
+                  prefixIcon: const Icon(
+                    Icons.lock_outline,
+                    color: Color(0xFF64748B),
+                  ),
                   filled: true,
                   fillColor: Colors.white,
                   labelStyle: const TextStyle(color: Color(0xFF64748B)),
@@ -107,7 +114,10 @@ class _SecurityScreenState extends State<SecurityScreen> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFF2563EB), width: 2),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF2563EB),
+                      width: 2,
+                    ),
                   ),
                   errorBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -115,11 +125,16 @@ class _SecurityScreenState extends State<SecurityScreen> {
                   ),
                   focusedErrorBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFFB91C1C), width: 2),
+                    borderSide: const BorderSide(
+                      color: Color(0xFFB91C1C),
+                      width: 2,
+                    ),
                   ),
                 ),
                 validator: (value) {
-                  if (value == null || value.isEmpty) return 'Vui lòng nhập mật khẩu hiện tại';
+                  if (value == null || value.isEmpty) {
+                    return 'Vui lòng nhập mật khẩu hiện tại';
+                  }
                   return null;
                 },
               ),
@@ -129,7 +144,10 @@ class _SecurityScreenState extends State<SecurityScreen> {
                 obscureText: true,
                 decoration: InputDecoration(
                   labelText: 'Mật khẩu mới',
-                  prefixIcon: const Icon(Icons.lock_reset, color: Color(0xFF64748B)),
+                  prefixIcon: const Icon(
+                    Icons.lock_reset,
+                    color: Color(0xFF64748B),
+                  ),
                   filled: true,
                   fillColor: Colors.white,
                   labelStyle: const TextStyle(color: Color(0xFF64748B)),
@@ -139,7 +157,10 @@ class _SecurityScreenState extends State<SecurityScreen> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFF2563EB), width: 2),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF2563EB),
+                      width: 2,
+                    ),
                   ),
                   errorBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -147,12 +168,19 @@ class _SecurityScreenState extends State<SecurityScreen> {
                   ),
                   focusedErrorBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFFB91C1C), width: 2),
+                    borderSide: const BorderSide(
+                      color: Color(0xFFB91C1C),
+                      width: 2,
+                    ),
                   ),
                 ),
                 validator: (value) {
-                  if (value == null || value.isEmpty) return 'Vui lòng nhập mật khẩu mới';
-                  if (value.length < 6) return 'Mật khẩu phải có ít nhất 6 ký tự';
+                  if (value == null || value.isEmpty) {
+                    return 'Vui lòng nhập mật khẩu mới';
+                  }
+                  if (value.length < 6) {
+                    return 'Mật khẩu phải có ít nhất 6 ký tự';
+                  }
                   return null;
                 },
               ),
@@ -162,7 +190,10 @@ class _SecurityScreenState extends State<SecurityScreen> {
                 obscureText: true,
                 decoration: InputDecoration(
                   labelText: 'Xác nhận mật khẩu mới',
-                  prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF64748B)),
+                  prefixIcon: const Icon(
+                    Icons.lock_outline,
+                    color: Color(0xFF64748B),
+                  ),
                   filled: true,
                   fillColor: Colors.white,
                   labelStyle: const TextStyle(color: Color(0xFF64748B)),
@@ -172,7 +203,10 @@ class _SecurityScreenState extends State<SecurityScreen> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFF2563EB), width: 2),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF2563EB),
+                      width: 2,
+                    ),
                   ),
                   errorBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -180,12 +214,19 @@ class _SecurityScreenState extends State<SecurityScreen> {
                   ),
                   focusedErrorBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFFB91C1C), width: 2),
+                    borderSide: const BorderSide(
+                      color: Color(0xFFB91C1C),
+                      width: 2,
+                    ),
                   ),
                 ),
                 validator: (value) {
-                  if (value == null || value.isEmpty) return 'Vui lòng xác nhận mật khẩu';
-                  if (value != _newPasswordController.text) return 'Mật khẩu không khớp';
+                  if (value == null || value.isEmpty) {
+                    return 'Vui lòng xác nhận mật khẩu';
+                  }
+                  if (value != _newPasswordController.text) {
+                    return 'Mật khẩu không khớp';
+                  }
                   return null;
                 },
               ),
@@ -199,15 +240,26 @@ class _SecurityScreenState extends State<SecurityScreen> {
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                   child: _isLoading
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                      )
-                    : const Text('Cập nhật mật khẩu', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text(
+                          'Cập nhật mật khẩu',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                 ),
               ),
               const SizedBox(height: 24),
@@ -215,12 +267,19 @@ class _SecurityScreenState extends State<SecurityScreen> {
                 child: TextButton(
                   onPressed: () {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Yêu cầu đặt lại mật khẩu đã được gửi tới Email của bạn')),
+                      const SnackBar(
+                        content: Text(
+                          'Yêu cầu đặt lại mật khẩu đã được gửi tới Email của bạn',
+                        ),
+                      ),
                     );
                   },
                   child: const Text(
                     'Quên mật khẩu?',
-                    style: TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.w500),
+                    style: TextStyle(
+                      color: Color(0xFF64748B),
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
               ),

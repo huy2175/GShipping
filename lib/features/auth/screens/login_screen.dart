@@ -1,4 +1,3 @@
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -63,9 +62,8 @@ class _LoginScreenState extends State<LoginScreen> {
       // Auth state listener trong app.dart sẽ tự chuyển màn hình.
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_errorMessage(e))),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(_errorMessage(e))));
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -125,12 +123,12 @@ class _LoginScreenState extends State<LoginScreen> {
                         label: 'Email',
                         icon: Icons.email_outlined,
                         keyboardType: TextInputType.emailAddress,
+                        textInputAction: TextInputAction.next,
                         validator: (value) {
                           final email = value?.trim() ?? '';
                           if (email.isEmpty) return 'Vui lòng nhập email.';
-                          if (!RegExp(
-                            r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
-                          ).hasMatch(email)) {
+                          if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+                              .hasMatch(email)) {
                             return 'Email không đúng định dạng.';
                           }
                           return null;
@@ -142,6 +140,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         label: 'Mật khẩu',
                         icon: Icons.lock_outline,
                         obscureText: _hidePassword,
+                        textInputAction: TextInputAction.done,
+                        onFieldSubmitted: (_) => _login(),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return 'Vui lòng nhập mật khẩu.';
@@ -182,9 +182,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 )
                               : const Text(
                                   'ĐĂNG NHẬP',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                  style: TextStyle(fontWeight: FontWeight.bold),
                                 ),
                         ),
                       ),
@@ -192,9 +190,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Flexible(
-                            child: Text('Chưa có tài khoản? '),
-                          ),
+                          const Flexible(child: Text('Chưa có tài khoản? ')),
                           TextButton(
                             onPressed: () {
                               Navigator.of(context).push(

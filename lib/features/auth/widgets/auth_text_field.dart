@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 
 class AuthTextField extends StatelessWidget {
@@ -8,6 +7,8 @@ class AuthTextField extends StatelessWidget {
   final bool obscureText;
   final TextInputType keyboardType;
   final String? Function(String?)? validator;
+  final TextInputAction? textInputAction;
+  final ValueChanged<String>? onFieldSubmitted;
 
   const AuthTextField({
     super.key,
@@ -17,6 +18,8 @@ class AuthTextField extends StatelessWidget {
     this.obscureText = false,
     this.keyboardType = TextInputType.text,
     this.validator,
+    this.textInputAction,
+    this.onFieldSubmitted,
   });
 
   @override
@@ -26,6 +29,8 @@ class AuthTextField extends StatelessWidget {
       obscureText: obscureText,
       keyboardType: keyboardType,
       validator: validator,
+      textInputAction: textInputAction,
+      onFieldSubmitted: onFieldSubmitted,
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: Icon(icon),
@@ -41,10 +46,7 @@ class AuthTextField extends StatelessWidget {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(
-            color: Color(0xFF2563EB),
-            width: 1.5,
-          ),
+          borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.5),
         ),
       ),
     );

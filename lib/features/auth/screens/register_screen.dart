@@ -1,4 +1,3 @@
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -69,9 +68,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (mounted) Navigator.of(context).pop();
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_errorMessage(e))),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(_errorMessage(e))));
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -129,6 +127,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         controller: _nameController,
                         label: 'Họ và tên',
                         icon: Icons.person_outline,
+                        textInputAction: TextInputAction.next,
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
                             return 'Vui lòng nhập họ và tên.';
@@ -142,12 +141,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         label: 'Email',
                         icon: Icons.email_outlined,
                         keyboardType: TextInputType.emailAddress,
+                        textInputAction: TextInputAction.next,
                         validator: (value) {
                           final email = value?.trim() ?? '';
                           if (email.isEmpty) return 'Vui lòng nhập email.';
-                          if (!RegExp(
-                            r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
-                          ).hasMatch(email)) {
+                          if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+                              .hasMatch(email)) {
                             return 'Email không đúng định dạng.';
                           }
                           return null;
@@ -159,6 +158,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         label: 'Mật khẩu (ít nhất 6 ký tự)',
                         icon: Icons.lock_outline,
                         obscureText: _hidePassword,
+                        textInputAction: TextInputAction.next,
                         validator: (value) {
                           if (value == null || value.length < 6) {
                             return 'Mật khẩu phải có ít nhất 6 ký tự.';
@@ -184,6 +184,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         label: 'Xác nhận mật khẩu',
                         icon: Icons.lock_reset_outlined,
                         obscureText: _hideConfirmPassword,
+                        textInputAction: TextInputAction.done,
+                        onFieldSubmitted: (_) => _register(),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return 'Vui lòng xác nhận mật khẩu.';
@@ -199,8 +201,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         child: TextButton(
                           onPressed: () {
                             setState(() {
-                              _hideConfirmPassword =
-                                  !_hideConfirmPassword;
+                              _hideConfirmPassword = !_hideConfirmPassword;
                             });
                           },
                           child: Text(
@@ -232,9 +233,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 )
                               : const Text(
                                   'TẠO TÀI KHOẢN',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                  style: TextStyle(fontWeight: FontWeight.bold),
                                 ),
                         ),
                       ),

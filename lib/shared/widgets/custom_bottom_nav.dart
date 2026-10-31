@@ -20,7 +20,7 @@ class CustomBottomNav extends StatelessWidget {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, -2),
           ),
@@ -41,9 +41,14 @@ class CustomBottomNav extends StatelessWidget {
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 300),
                   curve: Curves.easeInOut,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
-                    color: isSelected ? const Color(0xFFEFF6FF) : Colors.transparent,
+                    color: isSelected
+                        ? const Color(0xFFEFF6FF)
+                        : Colors.transparent,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Column(
@@ -55,7 +60,9 @@ class CustomBottomNav extends StatelessWidget {
                         curve: Curves.easeInOut,
                         child: Icon(
                           item.icon,
-                          color: isSelected ? const Color(0xFF2563EB) : const Color(0xFF64748B),
+                          color: isSelected
+                              ? const Color(0xFF2563EB)
+                              : const Color(0xFF64748B),
                           size: isSelected ? 26 : 24,
                         ),
                       ),
@@ -63,14 +70,18 @@ class CustomBottomNav extends StatelessWidget {
                       AnimatedDefaultTextStyle(
                         duration: const Duration(milliseconds: 300),
                         style: TextStyle(
-                          color: isSelected ? const Color(0xFF2563EB) : const Color(0xFF64748B),
+                          color: isSelected
+                              ? const Color(0xFF2563EB)
+                              : const Color(0xFF64748B),
                           fontSize: isSelected ? 11 : 10,
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          fontWeight: isSelected
+                              ? FontWeight.bold
+                              : FontWeight.normal,
                         ),
                         child: Text(
-                        item.label,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                          item.label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],

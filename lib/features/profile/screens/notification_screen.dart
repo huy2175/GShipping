@@ -9,11 +9,11 @@ class NotificationScreen extends StatefulWidget {
 
 class _NotificationScreenState extends State<NotificationScreen> {
   // Giả lập trạng thái thông báo (trong thực tế sẽ lưu vào Firestore/SharedPrefs)
-  Map<String, bool> _notificationSettings = {
-    'new_shift': true,        // Thông báo ca làm mới
-    'shift_reminder': true,  // Nhắc nhở ca làm
-    'system_alert': true,     // Thông báo hệ thống
-    'message_alert': false,   // Thông báo tin nhắn
+  final Map<String, bool> _notificationSettings = {
+    'new_shift': true, // Thông báo ca làm mới
+    'shift_reminder': true, // Nhắc nhở ca làm
+    'system_alert': true, // Thông báo hệ thống
+    'message_alert': false, // Thông báo tin nhắn
   };
 
   void _toggleNotification(String key) {
@@ -30,7 +30,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
       appBar: AppBar(
         title: const Text(
           'Cài đặt thông báo',
-          style: TextStyle(color: Color(0xFF0F172A), fontWeight: FontWeight.w600),
+          style: TextStyle(
+            color: Color(0xFF0F172A),
+            fontWeight: FontWeight.w600,
+          ),
         ),
         centerTitle: true,
         elevation: 0,
@@ -122,7 +125,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
         onChanged: (bool value) {
           _toggleNotification(key);
         },
-        activeColor: const Color(0xFF2563EB),
+        activeThumbColor: const Color(0xFF2563EB),
       ),
     );
   }

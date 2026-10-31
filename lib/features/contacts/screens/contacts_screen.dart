@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:latlong2/latlong.dart';
+
 import '../services/firestore_customer_service.dart';
 import 'customer_detail_screen.dart';
 import '../models/customer_model.dart';
+
 import 'package:g_shipping/shared/widgets/animated_card.dart';
+
+import '../../../shared/widgets/location_picker_screen.dart';
+import '../../home/widgets/location_details_sheet.dart';
 
 class ContactsScreen extends StatefulWidget {
   const ContactsScreen({super.key});
@@ -16,6 +22,20 @@ class _ContactsScreenState extends State<ContactsScreen> {
   String _searchQuery = '';
   bool _isSelectionMode = false;
   final Set<String> _selectedCustomerIds = {};
+
+  Future<void> _addCustomer() async {
+    final point = await Navigator.push<LatLng>(
+      context,
+      MaterialPageRoute(builder: (_) => const LocationPickerScreen()),
+    );
+    if (point == null || !mounted) return;
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => LocationDetailsSheet(location: point),
+    );
+  }
 
   List<Customer> _filterCustomers(List<Customer> customers) {
     if (_searchQuery.isEmpty) return customers;
@@ -32,9 +52,14 @@ class _ContactsScreenState extends State<ContactsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Xác nhận xóa'),
-        content: Text('Bạn có chắc chắn muốn xóa ${_selectedCustomerIds.length} khách hàng đã chọn?'),
+        content: Text(
+          'Bạn có chắc chắn muốn xóa ${_selectedCustomerIds.length} khách hàng đã chọn?',
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Hủy')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Hủy'),
+          ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             child: const Text('Xóa', style: TextStyle(color: Colors.red)),
@@ -43,11 +68,13 @@ class _ContactsScreenState extends State<ContactsScreen> {
       ),
     );
 
+    if (!mounted) return;
     if (confirm == true) {
       try {
         for (var id in _selectedCustomerIds) {
           await _customerService.deleteCustomer(id);
         }
+        if (!mounted) return;
         setState(() {
           _isSelectionMode = false;
           _selectedCustomerIds.clear();
@@ -56,9 +83,9 @@ class _ContactsScreenState extends State<ContactsScreen> {
           const SnackBar(content: Text('Đã xóa các khách hàng được chọn!')),
         );
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi khi xóa: $e')),
-        );
+        if (!mounted) return;
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Lỗi khi xóa: $e')));
       }
     }
   }
@@ -70,7 +97,10 @@ class _ContactsScreenState extends State<ContactsScreen> {
       appBar: AppBar(
         title: Text(
           _isSelectionMode ? 'Chọn khách hàng' : 'Khách hàng',
-          style: const TextStyle(color: Color(0xFF0F172A), fontWeight: FontWeight.w600),
+          style: const TextStyle(
+            color: Color(0xFF0F172A),
+            fontWeight: FontWeight.w600,
+          ),
         ),
         centerTitle: true,
         elevation: 0,
@@ -108,8 +138,14 @@ class _ContactsScreenState extends State<ContactsScreen> {
                 },
                 decoration: InputDecoration(
                   hintText: 'Tìm tên, SĐT hoặc địa chỉ...',
-                  hintStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 14),
-                  prefixIcon: const Icon(Icons.search, color: Color(0xFF64748B)),
+                  hintStyle: const TextStyle(
+                    color: Color(0xFF64748B),
+                    fontSize: 14,
+                  ),
+                  prefixIcon: const Icon(
+                    Icons.search,
+                    color: Color(0xFF64748B),
+                  ),
                   filled: true,
                   fillColor: Colors.white,
                   enabledBorder: OutlineInputBorder(
@@ -118,7 +154,10 @@ class _ContactsScreenState extends State<ContactsScreen> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFF2563EB), width: 2),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF2563EB),
+                      width: 2,
+                    ),
                   ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -132,7 +171,9 @@ class _ContactsScreenState extends State<ContactsScreen> {
               stream: _customerService.getCustomersStream(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator(color: Color(0xFF2563EB)));
+                  return const Center(
+                    child: CircularProgressIndicator(color: Color(0xFF2563EB)),
+                  );
                 }
                 if (snapshot.hasError) {
                   return Center(
@@ -151,7 +192,9 @@ class _ContactsScreenState extends State<ContactsScreen> {
                   );
                 }
 
-                final customers = snapshot.data!.map((map) => Customer.fromMap(map)).toList();
+                final customers = snapshot.data!
+                    .map((map) => Customer.fromMap(map))
+                    .toList();
                 final filteredCustomers = _filterCustomers(customers);
 
                 if (filteredCustomers.isEmpty) {
@@ -164,7 +207,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
                 }
 
                 return ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
                   itemCount: filteredCustomers.length,
                   itemBuilder: (context, index) {
                     final customer = filteredCustomers[index];
@@ -189,6 +232,13 @@ class _ContactsScreenState extends State<ContactsScreen> {
           ),
         ],
       ),
+      floatingActionButton: _isSelectionMode
+          ? null
+          : FloatingActionButton.extended(
+              onPressed: _addCustomer,
+              icon: const Icon(Icons.person_add_alt_1),
+              label: const Text('Thêm khách'),
+            ),
     );
   }
 }
@@ -228,7 +278,9 @@ class CustomerCard extends StatelessWidget {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
           side: BorderSide(
-            color: isSelected ? const Color(0xFF2563EB) : const Color(0xFFE2E8F0),
+            color: isSelected
+                ? const Color(0xFF2563EB)
+                : const Color(0xFFE2E8F0),
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -245,8 +297,14 @@ class CustomerCard extends StatelessWidget {
                   radius: 24,
                   backgroundColor: const Color(0xFF2563EB),
                   child: Text(
-                    customer.fullName.isNotEmpty ? customer.fullName[0].toUpperCase() : '?',
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                    customer.fullName.isNotEmpty
+                        ? customer.fullName[0].toUpperCase()
+                        : '?',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
                   ),
                 ),
           title: Text(
@@ -267,19 +325,29 @@ class CustomerCard extends StatelessWidget {
                   const SizedBox(width: 6),
                   Text(
                     customer.phoneNumber,
-                    style: const TextStyle(fontSize: 14, color: Color(0xFF0F172A)),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFF0F172A),
+                    ),
                   ),
                 ],
               ),
               const SizedBox(height: 6),
               Row(
                 children: [
-                  const Icon(Icons.location_on, size: 14, color: Color(0xFF64748B)),
+                  const Icon(
+                    Icons.location_on,
+                    size: 14,
+                    color: Color(0xFF64748B),
+                  ),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
                       customer.address,
-                      style: const TextStyle(fontSize: 14, color: Color(0xFF0F172A)),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Color(0xFF0F172A),
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -299,7 +367,9 @@ class CustomerCard extends StatelessWidget {
               ],
             ],
           ),
-          trailing: isSelectionMode ? null : const Icon(Icons.chevron_right, color: Color(0xFF64748B)),
+          trailing: isSelectionMode
+              ? null
+              : const Icon(Icons.chevron_right, color: Color(0xFF64748B)),
         ),
       ),
     );

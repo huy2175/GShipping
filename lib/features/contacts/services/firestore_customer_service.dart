@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:latlong2/latlong.dart';
+
 import 'i_customer_service.dart';
 
 class FirestoreCustomerService implements ICustomerService {
@@ -38,10 +39,7 @@ class FirestoreCustomerService implements ICustomerService {
           .get();
 
       return snapshot.docs.map((doc) {
-        return {
-          'id': doc.id,
-          ...doc.data() as Map<String, dynamic>,
-        };
+        return {'id': doc.id, ...doc.data() as Map<String, dynamic>};
       }).toList();
     } catch (e) {
       throw Exception('Firestore Error (get): $e');
@@ -54,13 +52,10 @@ class FirestoreCustomerService implements ICustomerService {
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) {
-        return {
-          'id': doc.id,
-          ...doc.data() as Map<String, dynamic>,
-        };
-      }).toList();
-    });
+          return snapshot.docs.map((doc) {
+            return {'id': doc.id, ...doc.data()};
+          }).toList();
+        });
   }
 
   @override
