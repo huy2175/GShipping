@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../models/customer_model.dart';
 import '../services/firestore_customer_service.dart';
 import '../../shifts/screens/customer_map_screen.dart';
 import '../../../shared/widgets/location_picker_screen.dart';
+import '../../../shared/services/image_upload_service.dart';
 
 import 'package:latlong2/latlong.dart';
 
@@ -26,6 +28,9 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
   late String _savedAddress = widget.customer.address;
   late String _savedNote = widget.customer.note ?? '';
   late LatLng? _savedLocation = widget.customer.location;
+  late List<String> _imageUrls = [...?widget.customer.imageUrls];
+  final List<XFile> _newImages = [];
+  final _picker = ImagePicker();
 
   late TextEditingController _nameController;
   late TextEditingController _phoneController;
@@ -71,11 +76,15 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
       return;
     }
     try {
+      for (final image in _newImages) {
+        _imageUrls.add(await ImageUploadService.upload(image));
+      }
       await _customerService.updateCustomer(widget.customer.id, {
         'fullName': _nameController.text,
         'phoneNumber': _phoneController.text,
         'address': _addressController.text,
         'note': _noteController.text,
+        'imageUrls': _imageUrls,
         if (_locationChanged && _selectedLocation != null) ...{
           'latitude': _selectedLocation!.latitude,
           'longitude': _selectedLocation!.longitude,
@@ -89,6 +98,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
         _savedAddress = _addressController.text.trim();
         _savedNote = _noteController.text.trim();
         _savedLocation = _selectedLocation;
+        _newImages.clear();
         _locationChanged = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
@@ -140,6 +150,43 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     }
   }
 
+  Future<void> _addImages() async {
+    final files = await _picker.pickMultiImage(imageQuality: 80, maxWidth: 1600);
+    if (mounted && files.isNotEmpty) setState(() => _newImages.addAll(files));
+  }
+
+  Future<void> _deleteCustomer() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Xóa khách hàng?'),
+        content: Text('Bạn có chắc muốn xóa ${widget.customer.fullName}?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Hủy')),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Xóa')),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    try {
+      await _customerService.deleteCustomer(widget.customer.id);
+      if (mounted) Navigator.pop(context);
+    } catch (error) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Xóa thất bại: $error')));
+    }
+  }
+
+  void _showImage(String url) => showDialog<void>(
+    context: context,
+    builder: (_) => Dialog.fullscreen(
+      backgroundColor: Colors.black,
+      child: Stack(children: [
+        Center(child: InteractiveViewer(child: Image.network(url, fit: BoxFit.contain))),
+        Positioned(top: 32, right: 12, child: IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close, color: Colors.white))),
+      ]),
+    ),
+  );
+
   void _toggleEditing() {
     if (_isEditing) {
       _nameController.text = _displayName;
@@ -148,6 +195,8 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
       _noteController.text = _savedNote;
       _selectedLocation = _savedLocation;
       _locationChanged = false;
+      _newImages.clear();
+      _imageUrls = [...?widget.customer.imageUrls];
     }
     setState(() => _isEditing = !_isEditing);
   }
@@ -169,6 +218,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
         backgroundColor: Colors.transparent,
         foregroundColor: const Color(0xFF0F172A),
         actions: [
+          if (!_isEditing) IconButton(onPressed: _deleteCustomer, tooltip: 'Xóa khách hàng', icon: const Icon(Icons.delete_outline, color: Colors.red)),
           IconButton(
             icon: Icon(
               _isEditing ? Icons.close : Icons.edit,
@@ -266,8 +316,8 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
   }
 
   Widget _buildImageGallery() {
-    final images = widget.customer.imageUrls;
-    if (images == null || images.isEmpty) {
+    final images = _imageUrls;
+    if (images.isEmpty && _newImages.isEmpty && !_isEditing) {
       return CircleAvatar(
         radius: 50,
         backgroundColor: const Color(0xFF2563EB),
@@ -289,13 +339,20 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         shrinkWrap: true,
-        itemCount: images.length,
+      itemCount: images.length + _newImages.length + (_isEditing ? 1 : 0),
         itemBuilder: (context, index) {
-          return Padding(
+        if (index >= images.length + _newImages.length) return IconButton(onPressed: _addImages, icon: const Icon(Icons.add_a_photo, size: 36));
+        if (index >= images.length) {
+          final i = index - images.length;
+          return Stack(children: [GestureDetector(onTap: () async { final bytes = await _newImages[i].readAsBytes(); if (mounted) showDialog<void>(context: context, builder: (_) => Dialog.fullscreen(child: InteractiveViewer(child: Image.memory(bytes)))); }, child: FutureBuilder(future: _newImages[i].readAsBytes(), builder: (_, s) => s.hasData ? Image.memory(s.data!, width: 100, height: 100, fit: BoxFit.cover) : const SizedBox(width: 100, height: 100))), if (_isEditing) Positioned(right: 0, child: IconButton(onPressed: () => setState(() => _newImages.removeAt(i)), icon: const Icon(Icons.cancel, color: Colors.red)))]);
+        }
+          return Stack(
+            children: [
+              Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(12),
-              child: Image.network(
+              child: GestureDetector(onTap: () => _showImage(images[index]), child: Image.network(
                 images[index],
                 width: 100,
                 height: 100,
@@ -309,8 +366,19 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                     color: Color(0xFFCBD5E1),
                   ),
                 ),
-              ),
+              )),
             ),
+              ),
+              if (_isEditing)
+                Positioned(
+                  right: 0,
+                  top: 0,
+                  child: IconButton(
+                    onPressed: () => setState(() => _imageUrls.removeAt(index)),
+                    icon: const Icon(Icons.cancel, color: Colors.red),
+                  ),
+                ),
+            ],
           );
         },
       ),

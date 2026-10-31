@@ -38,9 +38,14 @@ class CustomerMapScreen extends StatelessWidget {
               name: customer['fullName'] as String?,
               address: customer['address'] as String?,
               phone: customer['phoneNumber'] as String?,
+              imageUrl: (customer['imageUrls'] as List?)?.whereType<String>().firstOrNull,
+              imageUrls: (customer['imageUrls'] as List?)?.whereType<String>().toList() ?? const [],
             ),
           ),
-          child: const Icon(Icons.location_on, color: Colors.red, size: 40),
+          child: _CustomerPin(
+            name: customer['fullName'] as String? ?? 'Khách',
+            imageUrl: (customer['imageUrls'] as List?)?.whereType<String>().firstOrNull,
+          ),
         ),
       );
     }).toList();
@@ -83,4 +88,22 @@ class CustomerMapScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+class _CustomerPin extends StatelessWidget {
+  const _CustomerPin({required this.name, this.imageUrl});
+  final String name;
+  final String? imageUrl;
+
+  @override
+  Widget build(BuildContext context) => Column(children: [
+    Container(
+      width: 42,
+      height: 42,
+      decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, border: Border.all(color: Colors.red, width: 2)),
+      clipBehavior: Clip.antiAlias,
+      child: imageUrl == null ? const Icon(Icons.person, color: Colors.red) : Image.network(imageUrl!, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(Icons.person, color: Colors.red)),
+    ),
+    Flexible(child: Text(name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 10, backgroundColor: Colors.white))),
+  ]);
 }

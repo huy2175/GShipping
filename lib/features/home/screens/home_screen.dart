@@ -143,6 +143,7 @@ class _HomeScreenState extends State<HomeScreen> {
         name: customer['fullName'] as String?,
         address: customer['address'] as String?,
         phone: customer['phoneNumber'] as String?,
+        imageUrls: (customer['imageUrls'] as List?)?.whereType<String>().toList() ?? const [],
       ),
     );
   }
@@ -235,14 +236,14 @@ class _HomeScreenState extends State<HomeScreen> {
                             (customer['latitude'] as num).toDouble(),
                             (customer['longitude'] as num).toDouble(),
                           ),
-                          width: 44,
-                          height: 44,
+                          width: 64,
+                          height: 64,
                           child: GestureDetector(
                             onTap: () => _showCustomer(customer),
-                            child: const Icon(
-                              Icons.location_on,
-                              color: Color(0xFF2563EB),
-                              size: 40,
+                            child: _CustomerMapPin(
+                              imageUrl: (customer['imageUrls'] as List?)
+                                  ?.whereType<String>()
+                                  .firstOrNull,
                             ),
                           ),
                         ),
@@ -367,6 +368,36 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+}
+
+class _CustomerMapPin extends StatelessWidget {
+  const _CustomerMapPin({this.imageUrl});
+  final String? imageUrl;
+
+  @override
+  Widget build(BuildContext context) => Stack(
+    alignment: Alignment.center,
+    children: [
+      const Icon(Icons.location_on, size: 54, color: Color(0xFF2563EB)),
+      Positioned(
+        top: 5,
+        child: ClipOval(
+          child: Container(
+            width: 28,
+            height: 28,
+            color: Colors.white,
+            child: imageUrl == null
+                ? const Icon(Icons.person, size: 20, color: Color(0xFF2563EB))
+                : Image.network(
+                    imageUrl!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => const Icon(Icons.person, size: 20, color: Color(0xFF2563EB)),
+                  ),
+          ),
+        ),
+      ),
+    ],
+  );
 }
 
 class TrackerDot extends StatelessWidget {

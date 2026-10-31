@@ -10,6 +10,8 @@ class PlaceInfoSheet extends StatelessWidget {
     this.name,
     this.address,
     this.phone,
+    this.imageUrl,
+    this.imageUrls = const [],
     this.onSave,
     this.onDelete,
   });
@@ -18,6 +20,8 @@ class PlaceInfoSheet extends StatelessWidget {
   final String? name;
   final String? address;
   final String? phone;
+  final String? imageUrl;
+  final List<String> imageUrls;
   final VoidCallback? onSave;
   final VoidCallback? onDelete;
 
@@ -45,6 +49,34 @@ class PlaceInfoSheet extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              if (imageUrls.isNotEmpty || (imageUrl?.isNotEmpty ?? false))
+                SizedBox(
+                  height: 150,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    children: (imageUrls.isNotEmpty ? imageUrls : [imageUrl!])
+                        .map((url) => Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: GestureDetector(
+                                onTap: () => showDialog<void>(
+                                  context: context,
+                                  builder: (_) => Dialog.fullscreen(
+                                    backgroundColor: Colors.black,
+                                    child: Stack(children: [
+                                      Center(child: InteractiveViewer(child: Image.network(url, fit: BoxFit.contain))),
+                                      Positioned(top: 32, right: 12, child: IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close, color: Colors.white))),
+                                    ]),
+                                  ),
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Image.network(url, width: 180, height: 140, fit: BoxFit.cover),
+                                ),
+                              ),
+                            ))
+                        .toList(),
+                  ),
+                ),
               Text(
                 name ?? 'Vị trí đã chọn',
                 style: Theme.of(context).textTheme.titleLarge,
